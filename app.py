@@ -35,6 +35,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
 # 初始化OpenAI客户端
 try:
+    print('DASHSCOPE_API_KEY:'+os.getenv("DASHSCOPE_API_KEY"))
     ai_client = OpenAI(
         api_key=os.getenv("DASHSCOPE_API_KEY"),
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
