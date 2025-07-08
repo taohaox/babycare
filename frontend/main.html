@@ -759,7 +759,7 @@
             <div class="baby-list">
                 <div v-for="baby in babies" :key="baby.id" class="baby-card" @click="viewBaby(baby)">
                     <div class="baby-photo-container">
-                        <img :src="baby.photo || '/static/default-baby.jpg'" :alt="baby.name" class="baby-photo">
+                        <img :src="getPhotoUrl(baby.photo) || '/static/default-baby.jpg'" :alt="baby.name" class="baby-photo">
                     </div>
                     <div class="baby-info">
                         <h3 class="baby-name">
