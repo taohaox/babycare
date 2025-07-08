@@ -1841,6 +1841,34 @@
                         Swal.fire('获取失败', '请重试', 'error');
                         this.aiLoading = false;
                     });
+                },
+                async changePhoto(baby) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                            const response = await axios.post(
+                                `${window.API_BASE}/babies/${baby.id}/photo`,
+                                formData,
+                                { headers: { 'Content-Type': 'multipart/form-data' } }
+                            );
+                            if (response.data.success) {
+                                baby.photo = response.data.photo;
+                                this.$forceUpdate && this.$forceUpdate();
+                                Swal.fire('照片更新成功', '', 'success');
+                            } else {
+                                Swal.fire('照片更新失败', response.data.error || '', 'error');
+                            }
+                        } catch (err) {
+                            Swal.fire('照片更新失败', err.response?.data?.error || '', 'error');
+                        }
+                    };
+                    input.click();
                 }
             }
         });

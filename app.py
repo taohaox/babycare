@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime, timedelta
@@ -330,7 +330,7 @@ def get_babies():
         result = [{
             'id': baby.id,
             'name': baby.name,
-            'photo': f'/api/uploads/{os.path.basename(baby.photo)}' if baby.photo else None,
+            'photo': baby.photo,
             'birth_date': baby.birth_date.strftime('%Y-%m-%d'),
             'birth_time': baby.birth_time.strftime('%H:%M:%S') if baby.birth_time else None,
             'gender': baby.gender
@@ -703,6 +703,44 @@ def uploaded_file(filename):
 @app.route('/api/config/<filename>')
 def config_file(filename):
     return send_from_directory('config', filename)
+
+@app.route('/api/babies/<int:baby_id>/photo', methods=['POST'])
+@login_required
+@log_request
+def update_baby_photo(baby_id):
+    try:
+        baby = Baby.query.filter_by(id=baby_id, user_id=request.current_user_id).first()
+        if not baby:
+            return jsonify({'error': '宝宝不存在'}), 404
+
+        if 'file' not in request.files:
+            return jsonify({'error': '未上传文件'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '未选择文件'}), 400
+
+        # 保存新图片
+        filename = secure_filename(f"{baby_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        # 可选：删除旧图片文件
+        if baby.photo:
+            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(baby.photo))
+            if os.path.exists(old_path):
+                try:
+                    os.remove(old_path)
+                except Exception:
+                    pass
+
+        # 更新数据库
+        baby.photo = f'/api/uploads/{filename}'
+        db.session.commit()
+
+        return jsonify({'success': True, 'photo': baby.photo})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():
