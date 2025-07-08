@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 宝宝成长记录</title>
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin: 20px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .register-container {
+                margin: 10px;
+                padding: 30px 20px;
+                border-radius: 15px;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+                margin-bottom: 25px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .form-group input {
+                padding: 14px 16px;
+                font-size: 16px; /* 防止iOS缩放 */
+            }
+            
+            .btn-register {
+                padding: 16px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-container {
+                margin: 5px;
+                padding: 25px 15px;
+            }
+            
+            .title {
+                font-size: 1.3rem;
+            }
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .password-requirements {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="register-container">
+            <div class="logo">
+                <i class="bi bi-heart-pulse"></i>
+            </div>
+            <h1 class="title">创建账号</h1>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <form @submit.prevent="register">
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        v-model="email" 
+                        placeholder="请输入邮箱"
+                        required
+                        :disabled="loading"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        v-model="password" 
+                        placeholder="请输入密码（至少6位）"
+                        required
+                        :disabled="loading"
+                    >
+                    <div class="password-requirements">
+                        密码长度至少6位
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        v-model="confirmPassword" 
+                        placeholder="请再次输入密码"
+                        required
+                        :disabled="loading"
+                    >
+                </div>
+                
+                <button type="submit" class="btn-register" :disabled="loading">
+                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ loading ? '注册中...' : '注册' }}
+                </button>
+            </form>
+            
+            <p>
+                已有账号？ 
+                <a href="login.html" class="login-link">立即登录</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/vue.min.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/sweetalert2.all.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                email: '',
+                password: '',
+                confirmPassword: '',
+                loading: false
+            },
+            methods: {
+                async register() {
+                    if (!this.email || !this.password || !this.confirmPassword) {
+                        this.showError('请填写完整的注册信息');
+                        return;
+                    }
+
+                    if (this.password !== this.confirmPassword) {
+                        this.showError('两次输入的密码不一致');
+                        return;
+                    }
+
+                    if (this.password.length < 6) {
+                        this.showError('密码长度至少6位');
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.hideMessages();
+
+                    try {
+                        const response = await axios.post(`${window.config.BACKEND_URL}/api/register`, {
+                            email: this.email,
+                            password: this.password
+                        });
+
+                        if (response.data.token) {
+                            // 保存token和用户信息
+                            localStorage.setItem('token', response.data.token);
+                            localStorage.setItem('user', JSON.stringify(response.data.user));
+                            
+                            this.showSuccess('注册成功，正在跳转...');
+                            
+                            // 跳转到主页
+                            setTimeout(() => {
+                                window.location.href = 'main.html';
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        console.error('注册失败:', error);
+                        const message = error.response?.data?.message || '注册失败，请重试';
+                        this.showError(message);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                showError(message) {
+                    const errorEl = document.getElementById('errorMessage');
+                    errorEl.textContent = message;
+                    errorEl.style.display = 'block';
+                    document.getElementById('successMessage').style.display = 'none';
+                },
+                
+                showSuccess(message) {
+                    const successEl = document.getElementById('successMessage');
+                    successEl.textContent = message;
+                    successEl.style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
+                },
+                
+                hideMessages() {
+                    document.getElementById('errorMessage').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'none';
+                }
+            },
+            
+            mounted() {
+                // 如果已经登录，直接跳转到主页
+                const token = localStorage.getItem('token');
+                if (token) {
+                    window.location.href = 'main.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝宝成长记录</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="js/moment-zh-cn.js"></script>
+    <script src="js/sweetalert2.all.min.js"></script>
+    <script src="config.js"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .header-right {
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .baby-list {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 10px;
+            }
+            
+            .baby-card {
+                margin-bottom: 15px;
+            }
+            
+            .baby-info {
+                padding: 12px;
+            }
+            
+            .baby-actions {
+                padding: 12px;
+                flex-direction: column;
+            }
+            
+            .baby-actions button {
+                width: 100%;
+                padding: 12px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .baby-list {
+                padding: 5px;
+            }
+            
+            .baby-name {
+                font-size: 1.1em;
+            }
+            
+            .baby-info {
+                padding: 10px;
+            }
+            
+            .baby-actions {
+                padding: 10px;
+            }
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .user-email {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+        .btn-outline-secondary {
+            background: transparent;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-outline-primary {
+            background: transparent;
+            border: 1px solid #0d6efd;
+            color: #0d6efd;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-outline-primary:hover {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .baby-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .baby-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            cursor: pointer;
+        }
+        .baby-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .baby-card:hover {
+                transform: none;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .baby-card:active {
+                transform: scale(0.98);
+            }
+            
+            .add-baby-btn:hover {
+                transform: none;
+            }
+            
+            .add-baby-btn:active {
+                transform: scale(0.95);
+            }
+        }
+        .baby-photo-container {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .baby-photo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+        .baby-info {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .baby-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .baby-age {
+            font-size: 0.8em;
+            color: #666;
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .baby-details {
+            color: #666;
+            font-size: 0.95em;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .baby-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .baby-detail-item i {
+            width: 20px;
+            text-align: center;
+            color: #999;
+        }
+        .baby-detail-item span {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .baby-actions {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            z-index: 1;
+        }
+        .baby-actions button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+        .baby-actions button:hover {
+            opacity: 0.9;
+        }
+        .edit-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .edit-btn:hover {
+            background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        .upload-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #f8f9fa;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            z-index: 1;
+            background: #f8f9fa;
+        }
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            border-radius: 8px;
+        }
+        .photo-container {
+            width: 100%;
+            height: 100%;
+            margin: 0 auto 10px auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .baby-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5c636a;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: block;
+        }
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            color: #666;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .icon {
+            font-size: 1.2rem;
+            margin-right: 5px;
+        }
+        .edit-page {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .edit-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .edit-page-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .edit-page-content {
+            display: flex;
+            gap: 20px;
+        }
+        .edit-page-photo {
+            width: 200px;
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .edit-page-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .edit-page-info {
+            flex: 1;
+        }
+        .edit-page-form {
+            margin-bottom: 20px;
+        }
+        .edit-page-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .edit-page-form input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .edit-page-form button {
+            margin-right: 10px;
+        }
+        .edit-page-records {
+            margin-top: 20px;
+        }
+        .edit-page-records h3 {
+            margin-bottom: 10px;
+        }
+        .edit-page-records table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .edit-page-records th, .edit-page-records td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .edit-page-records th {
+            background-color: #f5f5f5;
+        }
+        .form-group.error input {
+            border-color: #dc3545;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .add-baby-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+
+        /* 移动端按钮适配 */
+        @media (max-width: 768px) {
+            .add-baby-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .add-baby-btn i {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .add-baby-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            .add-baby-btn i {
+                font-size: 16px;
+            }
+        }
+        .add-baby-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .add-baby-btn i {
+            font-size: 20px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 500px;
+            max-width: 90%;
+        }
+
+        /* 移动端模态框适配 */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+            }
+            
+            .modal-header {
+                padding: 15px 20px;
+            }
+            
+            .modal-title {
+                font-size: 18px;
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .form-group input,
+            .form-group select {
+                font-size: 16px; /* 防止iOS缩放 */
+                padding: 12px;
+            }
+            
+            .form-group textarea {
+                font-size: 16px;
+                min-height: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                width: 98%;
+                margin: 10px auto;
+            }
+            
+            .modal-header {
+                padding: 12px 15px;
+            }
+            
+            .modal-title {
+                font-size: 16px;
+            }
+            
+            .modal-body {
+                padding: 15px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 10px;
+            }
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            background: white;
+        }
+        .form-group.error input,
+        .form-group.error select {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <div class="header-left">
+                    <h1>宝宝成长记录</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info" v-if="currentUser">
+                        <span class="user-email">{{ currentUser.email }}</span>
+                        <button class="btn btn-outline-primary btn-sm" @click="goToChangePassword">
+                            <i class="bi bi-shield-lock"></i>
+                            修改密码
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" @click="logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                            退出登录
+                        </button>
+                    </div>
+                    <div class="add-baby-btn" @click="showAddModal">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>添加宝宝</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 宝宝列表 -->
+            <div class="baby-list">
+                <div v-for="baby in babies" :key="baby.id" class="baby-card" @click="viewBaby(baby)">
+                    <div class="baby-photo-container">
+                        <img :src="baby.photo || '/static/default-baby.jpg'" :alt="baby.name" class="baby-photo">
+                    </div>
+                    <div class="baby-info">
+                        <h3 class="baby-name">
+                            {{ baby.name }}
+                            <span class="baby-age">{{ baby.age }}</span>
+                        </h3>
+                        <div class="baby-details">
+                            <div class="baby-detail-item">
+                                <span>出生日期：{{ baby.birth_date }}</span>
+                            </div>
+                            <div class="baby-detail-item">
+                                <span>出生时间：{{ baby.birth_time || '未记录' }}</span>
+                            </div>
+                            <div class="baby-detail-item">
+                                <span>性别：{{ baby.gender }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加/编辑宝宝对话框 -->
+        <div class="modal" :class="{ show: addBabyDialogVisible }">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ editingBaby ? '编辑宝宝信息' : '添加宝宝信息' }}</h3>
+                    <button class="modal-close" @click="closeAddModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group" :class="{ error: errors.name }">
+                        <label>姓名</label>
+                        <input type="text" v-model="newBaby.name" placeholder="请输入姓名">
+                        <div class="error-message" v-if="errors.name">{{ errors.name }}</div>
+                    </div>
+                    <div class="form-group" :class="{ error: errors.birth_date }">
+                        <label>出生日期</label>
+                        <input type="date" v-model="newBaby.birth_date">
+                        <div class="error-message" v-if="errors.birth_date">{{ errors.birth_date }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>出生时间</label>
+                        <input type="time" class="form-control" v-model="newBaby.birth_time" step="1" required>
+                    </div>
+                    <div class="form-group" :class="{ error: errors.gender }">
+                        <label>性别</label>
+                        <select v-model="newBaby.gender">
+                            <option value="">请选择性别</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                        <div class="error-message" v-if="errors.gender">{{ errors.gender }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">照片</label>
+                        <div class="upload-container">
+                            <input type="file" 
+                                   class="form-control" 
+                                   @change="uploadPhoto" 
+                                   accept="image/*"
+                                   ref="photoInput"
+                                   style="display: none;">
+                            <div v-if="!newBaby.photo" class="upload-placeholder" @click="triggerFileInput">
+                                <i class="bi bi-camera"></i>
+                                <span>点击上传照片</span>
+                            </div>
+                            <img v-if="newBaby.photo" 
+                                 :src="getPhotoUrl(newBaby.photo)" 
+                                 class="preview-image" 
+                                 @click="triggerFileInput">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" v-if="editingBaby" @click="deleteBaby(editingBaby.id)">删除</button>
+                    <button class="btn btn-secondary" @click="closeAddModal">取消</button>
+                    <button class="btn btn-primary" @click="saveBaby">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 等待配置加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            // 配置axios默认值
+            axios.defaults.baseURL = window.config.BACKEND_URL;
+            
+            console.log('window.config.BACKEND_URL:', window.config.BACKEND_URL);
+            
+            new Vue({
+                el: '#app',
+                data: {
+                    babies: [],
+                    currentUser: null,
+                    newBaby: {
+                        name: '',
+                        birth_date: '',
+                        birth_time: '',
+                        gender: '',
+                        photo: null
+                    },
+                    editingBaby: null,
+                    addBabyDialogVisible: false,
+                    showEditPage: false,
+                    errors: {
+                        name: '',
+                        birth_date: '',
+                        gender: ''
+                    }
+                },
+                created() {
+                    console.log('Vue 实例已创建');
+                    this.checkAuth();
+                },
+                methods: {
+                    // 检查用户认证状态
+                    checkAuth() {
+                        const token = localStorage.getItem('token');
+                        const user = localStorage.getItem('user');
+                        
+                        if (!token || !user) {
+                            // 未登录，跳转到登录页面
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                        
+                        try {
+                            this.currentUser = JSON.parse(user);
+                            // 设置axios默认headers
+                            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                            // 获取宝宝列表
+                            this.fetchBabies();
+                        } catch (error) {
+                            console.error('解析用户信息失败:', error);
+                            this.logout();
+                        }
+                    },
+                    
+                    // 退出登录
+                    logout() {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                    },
+                    
+                    // 跳转到修改密码页面
+                    goToChangePassword() {
+                        window.location.href = 'change-password.html';
+                    },
+                    
+                    // 触发文件选择
+                    triggerFileInput() {
+                        console.log('触发文件选择');
+                        this.$refs.photoInput.click();
+                    },
+
+                    // 上传照片
+                    async uploadPhoto(event) {
+                        console.log('uploadPhoto 方法被调用');
+                        const file = event.target.files[0];
+                        if (!file) {
+                            console.log('没有选择文件');
+                            return;
+                        }
+                        console.log('开始上传照片:', file);
+                        try {
+                            // 创建 FormData 对象
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            // 发送文件到后端
+                            const response = await axios.post('/api/upload', formData, {
+                                headers: {
+                                    'Content-Type': 'multipart/form-data'
+                                }
+                            });
+                            console.log('照片上传成功:', response.data);
+                            this.$set(this.newBaby, 'photo', response.data.url);
+                        } catch (error) {
+                            console.error('上传照片失败:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: '上传照片失败',
+                                text: error.response?.data?.error || '请稍后重试'
+                            });
+                        }
+                    },
+
+                    validateForm() {
+                        this.errors = {
+                            name: '',
+                            birth_date: '',
+                            gender: ''
+                        };
+                        let isValid = true;
+
+                        if (!this.newBaby.name) {
+                            this.errors.name = '请输入姓名';
+                            isValid = false;
+                        }
+
+                        if (!this.newBaby.birth_date) {
+                            this.errors.birth_date = '请选择出生日期';
+                            isValid = false;
+                        }
+
+                        if (!this.newBaby.gender) {
+                            this.errors.gender = '请选择性别';
+                            isValid = false;
+                        }
+
+                        return isValid;
+                    },
+
+                    async saveBaby() {
+                        // 表单验证
+                        if (!this.validateForm()) {
+                            return;
+                        }
+
+                        try {
+                            const response = await axios.post(`${window.config.BACKEND_URL}/api/babies`, this.newBaby);
+                            this.babies.push(response.data);
+                            this.closeAddModal();
+                            Swal.fire('添加成功！', '', 'success');
+                        } catch (error) {
+                            console.error('保存宝宝信息失败:', error);
+                            // 统一处理400错误
+                            if (error.response && error.response.status === 400) {
+                                Swal.fire({
+                                    title: '提示',
+                                    text: error.response.data.message || '请检查输入信息',
+                                    icon: 'warning',
+                                    confirmButtonText: '确定'
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: '提示',
+                                    text: '系统错误，请稍后重试',
+                                    icon: 'error',
+                                    confirmButtonText: '确定'
+                                });
+                            }
+                        }
+                    },
+
+                    // 添加宝宝
+                    showAddModal() {
+                        this.addBabyDialogVisible = true;
+                        this.errors = {
+                            name: '',
+                            birth_date: '',
+                            gender: ''
+                        };
+                    },
+
+                    // 编辑宝宝
+                    editBaby(baby) {
+                        console.log('editBaby 方法被调用:', baby);
+                        this.editingBaby = { ...baby };
+                        this.showEditPage = true;
+                    },
+
+                    // 获取宝宝列表
+                    async fetchBabies() {
+                        console.log('fetchBabies 方法被调用');
+                        try {
+                            const response = await axios.get('/api/babies');
+                            console.log('获取宝宝列表成功:', response.data);
+                            this.babies = response.data.map(baby => {
+                                // 计算年龄
+                                const birthDate = moment(baby.birth_date);
+                                const now = moment();
+                                const years = now.diff(birthDate, 'years');
+                                const months = now.diff(birthDate, 'months') % 12;
+                                const days = now.diff(birthDate, 'days') % 30;
+                                
+                                let ageText = '';
+                                if (years > 0) {
+                                    ageText += `${years}岁`;
+                                }
+                                if (months > 0) {
+                                    ageText += `${months}个月`;
+                                }
+                                if (days > 0) {
+                                    ageText += `${days}天`;
+                                }
+                                
+                                return {
+                                    ...baby,
+                                    age: ageText
+                                };
+                            });
+                            console.log('baby.photo 字段内容:', this.babies.map(b => b.photo));
+                        } catch (error) {
+                            console.error('获取宝宝列表失败:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: '获取宝宝列表失败',
+                                text: error.response?.data?.error || '请稍后重试'
+                            });
+                        }
+                    },
+
+                    // 删除宝宝信息
+                    async deleteBaby(id) {
+                        Swal.fire({
+                            title: '确定要删除这个宝宝吗？',
+                            text: '此操作不可恢复！',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                axios.delete(`/api/babies/${id}`)
+                                    .then(response => {
+                                        this.babies = this.babies.filter(baby => baby.id !== id);
+                                        this.closeAddModal();
+                                        this.editingBaby = null;
+                                        Swal.fire('已删除！', '', 'success');
+                                    })
+                                    .catch(error => {
+                                        console.error('删除失败:', error);
+                                        Swal.fire('删除失败', '请重试', 'error');
+                                    });
+                            }
+                        });
+                    },
+                    
+                    // 处理图片加载错误
+                    handleImageError(event) {
+                        event.target.style.display = 'none';
+                        const container = event.target.parentElement;
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'photo-placeholder';
+                        placeholder.innerHTML = '<span class="icon">👶</span><p>图片加载失败</p>';
+                        container.appendChild(placeholder);
+                    },
+
+                    // 获取图片完整URL，始终指向后端服务器
+                    getPhotoUrl(photo) {
+                        if (!photo) return '';
+                        if (photo.startsWith('http://') || photo.startsWith('https://')) {
+                            return photo;
+                        }
+                        return window.config.BACKEND_URL + photo;
+                    },
+
+                    addRecord() {
+                        if (!this.editingBaby.records) {
+                            this.$set(this.editingBaby, 'records', []);
+                        }
+                        this.editingBaby.records.push({
+                            date: new Date().toISOString().split('T')[0],
+                            height: '',
+                            weight: ''
+                        });
+                    },
+
+                    saveRecord(record) {
+                        // 这里可以添加保存记录的逻辑
+                        console.log('保存记录:', record);
+                    },
+
+                    deleteRecord(index) {
+                        this.editingBaby.records.splice(index, 1);
+                    },
+
+                    viewBaby(baby) {
+                        window.location.href = `detail.html?id=${baby.id}`;
+                    },
+
+                    closeAddModal() {
+                        this.addBabyDialogVisible = false;
+                        this.newBaby = {
+                            name: '',
+                            birth_date: '',
+                            birth_time: '',
+                            gender: '',
+                            photo: null
+                        };
+                        this.errors = {
+                            name: '',
+                            birth_date: '',
+                            gender: ''
+                        };
+                    },
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
