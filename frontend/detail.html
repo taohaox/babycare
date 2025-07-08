@@ -1166,6 +1166,12 @@
                         <div class="main-photo" @click="showFullPhoto">
                             <img :src="getPhotoUrl(baby.photo)" :alt="baby.name + '的照片'" class="baby-photo">
                         </div>
+                        <!-- 更换照片按钮，点击后可上传新照片 -->
+                        <div style="margin-top: 10px; text-align: center;">
+                            <button class="btn btn-outline-primary btn-sm" @click.stop="changePhoto(baby)">
+                                <i class="bi bi-image"></i> 更换照片
+                            </button>
+                        </div>
                         <div class="main-info">
                             <h3>基本信息</h3>
                             <div class="info-grid">
