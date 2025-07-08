@@ -981,7 +981,7 @@
                         }
 
                         try {
-                            const response = await axios.post(`${window.config.BACKEND_URL}/api/babies`, this.newBaby);
+                            const response = await axios.post(`${window.API_BASE}/babies`, this.newBaby);
                             this.babies.push(response.data);
                             this.closeAddModal();
                             Swal.fire('添加成功！', '', 'success');

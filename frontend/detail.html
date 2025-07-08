@@ -1325,7 +1325,6 @@
     <script src="js/moment.min.js"></script>
     <script src="js/moment-zh-cn.js"></script>
     <script src="js/sweetalert2.all.min.js"></script>
-    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -1400,7 +1399,7 @@
                     return window.config.BACKEND_URL + photo;
                 },
                 fetchBaby(id) {
-                    axios.get(`${window.config.BACKEND_URL}/api/babies/${id}`)
+                    axios.get(`${window.API_BASE}/babies/${id}`)
                         .then(response => {
                             this.baby = response.data;
                             this.fetchRecords(id);
@@ -1411,7 +1410,7 @@
                         });
                 },
                 fetchRecords(babyId) {
-                    axios.get(`${window.config.BACKEND_URL}/api/babies/${babyId}/records`)
+                    axios.get(`${window.API_BASE}/babies/${babyId}/records`)
                         .then(response => {
                             // 使用Vue.set确保响应式更新
                             this.$set(this.baby, 'records', response.data);
@@ -1444,7 +1443,7 @@
 
                     // 加载标准生长曲线数据
                     const gender = this.baby.gender === '男' ? 'boy' : 'gril';
-                    axios.get(`${window.config.BACKEND_URL}/config/growth_curve_${gender}.json`)
+                    axios.get(`${window.API_BASE}/config/growth_curve_${gender}.json`)
                         .then(response => {
                             const standardData = response.data.growth_curve.percentile_data;
 
@@ -1691,7 +1690,7 @@
                         Swal.fire('提示', '请填写完整的记录信息', 'warning');
                         return;
                     }
-                    axios.post(`${window.config.BACKEND_URL}/api/babies/${this.baby.id}/records`, this.newRecord)
+                    axios.post(`${window.API_BASE}/babies/${this.baby.id}/records`, this.newRecord)
                         .then(response => {
                             this.baby.records.unshift(response.data);
                             this.newRecord = {
@@ -1723,7 +1722,7 @@
                         cancelButtonText: '取消'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            axios.delete(`${window.config.BACKEND_URL}/api/babies/${this.baby.id}/records/${recordId}`)
+                            axios.delete(`${window.API_BASE}/babies/${this.baby.id}/records/${recordId}`)
                                 .then(() => {
                                     this.baby.records = this.baby.records.filter(r => r.id !== recordId);
                                     // 使用Vue.set确保响应式更新
@@ -1781,7 +1780,7 @@
                 },
                 getAIAnalysis() {
                     this.aiLoading = true;
-                    axios.post(`${window.config.BACKEND_URL}/api/babies/${this.baby.id}/ai-analysis`)
+                    axios.post(`${window.API_BASE}/babies/${this.baby.id}/ai-analysis`)
                         .then(response => {
                             if (response.data.success) {
                                 this.aiResponse = response.data.message;
@@ -1810,7 +1809,7 @@
                     }
                     
                     this.aiLoading = true;
-                    axios.post(`${window.config.BACKEND_URL}/api/babies/${this.baby.id}/ai-analysis`, {
+                    axios.post(`${window.API_BASE}/babies/${this.baby.id}/ai-analysis`, {
                         message: this.userQuestion
                     })
                     .then(response => {

@@ -224,7 +224,6 @@
     <script src="js/vue.min.js"></script>
     <script src="js/axios.min.js"></script>
     <script src="js/sweetalert2.all.min.js"></script>
-    <script src="config.js"></script>
     <script>
         new Vue({
             el: '#app',
@@ -244,7 +243,7 @@
                     this.hideMessages();
 
                     try {
-                        const response = await axios.post(`${window.config.BACKEND_URL}/api/login`, {
+                        const response = await axios.post(`${window.API_BASE}/login`, {
                             email: this.email,
                             password: this.password
                         });

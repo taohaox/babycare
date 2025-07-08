@@ -1,19 +1,16 @@
 // 服务器配置
 const config = {
-    // 后端服务器配置
-    BACKEND_HOST: 'babyapi.gonyb.com',
-    BACKEND_PORT: 80,
-    get BACKEND_URL() {
-        return `http://${this.BACKEND_HOST}:${this.BACKEND_PORT}`;
-    },
-    
     // 前端服务器配置
     FRONTEND_HOST: 'localhost',
     FRONTEND_PORT: 8080,
-    get FRONTEND_URL() {
-        return `http://${this.FRONTEND_HOST}:${this.FRONTEND_PORT}`;
-    }
+    // 后端主机
+    BACKEND_HOST: 'babyapi.gonyb.com',
+    // 后端端口（如有需要可填写，如 8080；如 80/443 可留空）
+    BACKEND_PORT: '',
 };
 
-// 导出配置
+// 自动拼接 API 基础地址，支持 http/https
+window.API_BASE = `${window.location.protocol}//${config.BACKEND_HOST}/api`;
+
+// 其他配置依然可通过 window.config 访问
 window.config = config; 

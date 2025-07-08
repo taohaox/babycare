@@ -272,7 +272,7 @@
                     this.hideMessages();
 
                     try {
-                        const response = await axios.post(`${window.config.BACKEND_URL}/api/register`, {
+                        const response = await axios.post(`${window.API_BASE}/register`, {
                             email: this.email,
                             password: this.password
                         });
