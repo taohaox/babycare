@@ -27,10 +27,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # JWT配置
-jwt_secret = os.getenv('JWT_SECRET_KEY')
-if not jwt_secret:
-    raise RuntimeError('JWT_SECRET_KEY 环境变量未设置，服务无法启动！')
-app.config['JWT_SECRET_KEY'] = jwt_secret
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
 # 初始化OpenAI客户端

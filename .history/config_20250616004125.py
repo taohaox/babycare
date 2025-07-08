@@ -11,8 +11,7 @@ class Config:
     FRONTEND_URL = f'http://{FRONTEND_HOST}:{FRONTEND_PORT}'
     
     # 数据库配置
-    import os
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI', 'mysql://baby_growth:TpK7JeW3ZJC45BNE@192.168.187.128/baby_growth')
+    SQLALCHEMY_DATABASE_URI = 'mysql://baby_growth:TpK7JeW3ZJC45BNE@192.168.187.128/baby_growth'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 文件上传配置
