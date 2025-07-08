@@ -330,7 +330,7 @@ def get_babies():
         result = [{
             'id': baby.id,
             'name': baby.name,
-            'photo': f'{Config.BACKEND_URL}/api/uploads/{os.path.basename(baby.photo)}' if baby.photo else None,
+            'photo': f'/api/uploads/{os.path.basename(baby.photo)}' if baby.photo else None,
             'birth_date': baby.birth_date.strftime('%Y-%m-%d'),
             'birth_time': baby.birth_time.strftime('%H:%M:%S') if baby.birth_time else None,
             'gender': baby.gender
