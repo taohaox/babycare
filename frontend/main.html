@@ -846,9 +846,9 @@
         // 等待配置加载完成
         document.addEventListener('DOMContentLoaded', function() {
             // 配置axios默认值
-            axios.defaults.baseURL = window.config.BACKEND_URL;
+            axios.defaults.baseURL = window.API_BASE;
             
-            console.log('window.config.BACKEND_URL:', window.config.BACKEND_URL);
+            console.log('window.API_BASE:', window.API_BASE);
             
             new Vue({
                 el: '#app',
@@ -931,7 +931,7 @@
                             const formData = new FormData();
                             formData.append('file', file);
                             // 发送文件到后端
-                            const response = await axios.post('/api/upload', formData, {
+                            const response = await axios.post(`${window.API_BASE}/upload`, formData, {
                                 headers: {
                                     'Content-Type': 'multipart/form-data'
                                 }
@@ -1027,7 +1027,7 @@
                     async fetchBabies() {
                         console.log('fetchBabies 方法被调用');
                         try {
-                            const response = await axios.get('/api/babies');
+                            const response = await axios.get(`${window.API_BASE}/babies`);
                             console.log('获取宝宝列表成功:', response.data);
                             this.babies = response.data.map(baby => {
                                 // 计算年龄
@@ -1075,7 +1075,7 @@
                             cancelButtonText: '取消'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                axios.delete(`/api/babies/${id}`)
+                                axios.delete(`${window.API_BASE}/babies/${id}`)
                                     .then(response => {
                                         this.babies = this.babies.filter(baby => baby.id !== id);
                                         this.closeAddModal();
@@ -1106,7 +1106,7 @@
                         if (photo.startsWith('http://') || photo.startsWith('https://')) {
                             return photo;
                         }
-                        return window.config.BACKEND_URL + photo;
+                        return window.API_BASE + photo;
                     },
 
                     addRecord() {

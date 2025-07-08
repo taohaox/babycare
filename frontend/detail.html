@@ -1397,7 +1397,7 @@
                 getPhotoUrl(photo) {
                     if (!photo) return '';
                     if (photo.startsWith('http')) return photo;
-                    return window.config.BACKEND_URL + photo;
+                    return window.API_BASE + photo;
                 },
                 fetchBaby(id) {
                     axios.get(`${window.API_BASE}/babies/${id}`)
