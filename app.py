@@ -330,7 +330,7 @@ def get_babies():
         result = [{
             'id': baby.id,
             'name': baby.name,
-            'photo': f'{Config.BACKEND_URL}/uploads/{os.path.basename(baby.photo)}' if baby.photo else None,
+            'photo': f'{Config.BACKEND_URL}/api/uploads/{os.path.basename(baby.photo)}' if baby.photo else None,
             'birth_date': baby.birth_date.strftime('%Y-%m-%d'),
             'birth_time': baby.birth_time.strftime('%H:%M:%S') if baby.birth_time else None,
             'gender': baby.gender
@@ -683,7 +683,7 @@ def upload_file():
             app.logger.info(f"文件保存成功: {file_path}")
             
             # 返回文件URL
-            file_url = f'/uploads/{filename}'
+            file_url = f'/api/uploads/{filename}'
             return jsonify({
                 'message': '文件上传成功',
                 'url': file_url
@@ -696,11 +696,11 @@ def upload_file():
         return jsonify({'error': str(e)}), 500
 
 # 提供上传文件的访问
-@app.route('/uploads/<filename>')
+@app.route('/api/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/config/<filename>')
+@app.route('/api/config/<filename>')
 def config_file(filename):
     return send_from_directory('config', filename)
 
