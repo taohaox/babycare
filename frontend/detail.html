@@ -1396,8 +1396,22 @@
                 
                 getPhotoUrl(photo) {
                     if (!photo) return '';
-                    if (photo.startsWith('http')) return photo;
-                    return window.API_BASE + photo;
+                    // 如果是完整URL，直接返回
+                    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+                        // 如果是本地开发的地址，强制替换为线上API域名
+                        const apiRoot = window.API_BASE.replace(/\/api$/, '');
+                        if (photo.includes('localhost')) {
+                            // 提取 /uploads/xxx.jpg 部分
+                            const idx = photo.indexOf('/uploads/');
+                            if (idx !== -1) {
+                                return `${apiRoot}${photo.substring(idx)}`;
+                            }
+                        }
+                        return photo;
+                    }
+                    // 否则拼接 window.API_BASE 的主域名部分
+                    const apiRoot = window.API_BASE.replace(/\/api$/, '');
+                    return `${apiRoot}${photo.startsWith('/') ? '' : '/'}${photo}`;
                 },
                 fetchBaby(id) {
                     axios.get(`${window.API_BASE}/babies/${id}`)
