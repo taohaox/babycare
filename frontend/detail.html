@@ -1899,17 +1899,9 @@
                     if (!this.baby || !this.baby.records || this.baby.records.length === 0) {
                         return '-';
                     }
-                    
                     // 首先尝试查找与出生日期完全匹配的记录
                     let birthRecord = this.baby.records.find(record => record.date === this.baby.birth_date);
-                    
-                    // 如果没有找到完全匹配的，则查找最早的记录作为出生记录
-                    if (!birthRecord) {
-                        // 按日期排序，取最早的记录
-                        const sortedRecords = [...this.baby.records].sort((a, b) => new Date(a.date) - new Date(b.date));
-                        birthRecord = sortedRecords[0];
-                    }
-                    
+                    // 只返回完全匹配的出生当天记录，否则返回'-'
                     return birthRecord ? birthRecord[type] : '-';
                 },
                 showFullPhoto() {
