@@ -7,6 +7,7 @@
     <script src="config.js"></script>
     <link rel="stylesheet" href="css/bootstrap-icons.css">
     <style>
+        [v-cloak] { display: none !important; }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -1178,7 +1179,7 @@
     </style>
 </head>
 <body>
-    <div id="app">
+    <div id="app" v-cloak>
         <div v-if="baby && baby.photo !== undefined" class="detail-page">
             <div class="detail-header">
                 <div class="header-left">
