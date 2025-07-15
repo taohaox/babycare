@@ -116,13 +116,13 @@
             }
             
             .detail-content {
-                padding: 20px;
+            padding: 20px;
                 flex-direction: column;
                 gap: 20px;
-            }
+        }
             
-            .content {
-                flex-direction: column;
+        .content {
+            flex-direction: column;
                 gap: 15px;
             }
             
@@ -875,7 +875,6 @@
             color: #333;
             font-size: 1rem;
             min-height: 120px;
-            max-height: 350px;
             overflow-y: auto;
             background: #f8f9fa;
             border-radius: 8px;
@@ -1044,7 +1043,7 @@
         }
         .main-left {
             display: grid;
-            grid-template-rows: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 2fr 2fr;
             grid-gap: 18px;
             height: 100%;
         }
@@ -1134,11 +1133,11 @@
         }
         @media (max-width: 768px) {
             .main-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 2fr 1fr;;
                 grid-gap: 12px;
             }
             .main-left {
-                grid-template-rows: 160px 1fr 1fr;
+                grid-template-rows: 1fr 2fr 2fr;
                 grid-gap: 10px;
             }
             .main-left-top {
@@ -1164,14 +1163,26 @@
         .btn-change-photo:hover {
             background-color: #45a049;
         }
+        .ai-response-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .ai-response-content th, .ai-response-content td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+        }
+        .ai-response-content th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="detail-page">
+        <div v-if="baby && baby.photo !== undefined" class="detail-page">
             <div class="detail-header">
                 <div class="header-left">
-                    <h2 class="detail-title">{{ baby.name }} 的成长记录</h2>
+                <h2 class="detail-title">{{ baby && baby.name ? (baby.name + ' 的成长记录') : '' }}</h2>
                 </div>
                 <div class="header-right">
                     <div class="user-info" v-if="currentUser">
@@ -1185,19 +1196,19 @@
                             退出登录
                         </button>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn-maintain" @click="showMaintainModal = true">维护身高体重</button>
+                <div class="header-actions">
+                    <button class="btn-maintain" @click="showMaintainModal = true">维护身高体重</button>
                         <button class="btn-change-photo" @click="changePhoto(baby)"><i class="bi bi-image"></i> 更换照片</button>
-                        <button class="btn-back" @click="goBack">返回</button>
-                    </div>
+                    <button class="btn-back" @click="goBack">返回</button>
                 </div>
+            </div>
             </div>
             <div class="detail-content main-grid">
                 <!-- 左侧2/3 -->
                 <div class="main-left">
                     <div class="main-left-top">
                         <div class="main-photo" @click="showFullPhoto">
-                            <img :src="getPhotoUrl(baby.photo)" :alt="baby.name + '的照片'" class="baby-photo">
+                            <img :src="getPhotoUrl(baby && baby.photo ? baby.photo : '')" :alt="baby && baby.name ? (baby.name + '的照片') : ''" class="baby-photo">
                         </div>
                         <!-- 更换照片按钮，点击后可上传新照片 -->
                         <div style="margin-top: 10px; text-align: center;" v-if="false">
@@ -1210,15 +1221,15 @@
                             <div class="info-grid">
                                 <div class="info-item">
                                     <span class="info-label">姓名</span>
-                                    <span class="info-value">{{ baby.name }}</span>
+                                    <span class="info-value">{{ baby && baby.name ? baby.name : '' }}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">性别</span>
-                                    <span class="info-value">{{ baby.gender }}</span>
+                                    <span class="info-value">{{ baby && baby.gender ? baby.gender : '' }}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">出生日期</span>
-                                    <span class="info-value">{{ baby.birth_date }}</span>
+                                    <span class="info-value">{{ baby && baby.birth_date ? baby.birth_date : '' }}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">出生体重</span>
@@ -1230,66 +1241,57 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">年龄</span>
-                                    <span class="info-value">{{ calculateAge(baby.birth_date) }}</span>
+                                    <span class="info-value">{{ baby && baby.birth_date ? calculateAge(baby.birth_date) : '' }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="main-left-middle">
-                        <div class="chart-item">
-                            <div class="chart-title">身高-年龄曲线</div>
-                            <div id="heightAgeChart" class="chart"></div>
-                        </div>
+                            <div class="chart-item">
+                                <div class="chart-title">身高-年龄曲线</div>
+                                <div id="heightAgeChart" class="chart"></div>
+                            </div>
                     </div>
                     <div class="main-left-bottom">
-                        <div class="chart-item">
-                            <div class="chart-title">体重-年龄曲线</div>
-                            <div id="weightAgeChart" class="chart"></div>
+                            <div class="chart-item">
+                                <div class="chart-title">体重-年龄曲线</div>
+                                <div id="weightAgeChart" class="chart"></div>
+                            </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
                 <!-- 右侧1/3 -->
                 <div class="main-right">
                     <div class="ai-section">
                         <div class="ai-header">
                             <div class="ai-icon">
                                 <i class="bi bi-robot"></i>
-                            </div>
+                    </div>
                             <div class="ai-title">
                                 <h3>AI智能解读与建议</h3>
                                 <p>基于宝宝信息和生长记录，AI提供专业的生长发育分析</p>
                             </div>
                         </div>
                         <div class="ai-content-wrapper">
-                            <div v-if="!aiResponse" class="ai-welcome">
+                            <div v-if="!aiStarted" class="ai-welcome">
                                 <div class="ai-welcome-content">
                                     <div class="ai-welcome-icon">
                                         <i class="bi bi-lightbulb"></i>
                                     </div>
                                     <h4>智能分析宝宝生长发育</h4>
                                     <p>AI将分析宝宝的生长曲线、营养状况，并提供个性化建议</p>
-                                    <button class="btn btn-primary btn-lg" @click="getAIAnalysis" :disabled="aiLoading">
+                                    <button class="btn btn-primary btn-lg" @click="onStartAIAnalysis" :disabled="aiLoading">
                                         <span v-if="aiLoading" class="spinner-border spinner-border-sm me-2"></span>
                                         <i v-else class="bi bi-play-circle me-2"></i>
                                         {{ aiLoading ? 'AI分析中...' : '开始AI分析' }}
                                     </button>
                                 </div>
                             </div>
-                            <div v-if="aiResponse" class="ai-response-container">
+                            <div v-if="aiStarted" class="ai-response-container">
                                 <div class="ai-response-header">
                                     <h5><i class="bi bi-check-circle-fill text-success me-2"></i>AI解读结果</h5>
                                 </div>
-                                <div class="ai-response-content">
-                                    <template v-if="aiChunks.length">
-                                        <div v-for="(chunk, idx) in aiChunks" :key="idx" class="ai-stream-chunk" v-html="formatAIChunk(chunk)"></div>
-                                    </template>
-                                    <template v-else>
-                                        <span class="text-muted">暂无AI解读内容</span>
-                                    </template>
-                                    <div v-if="aiLoading" class="ai-thinking">
-                                        <span>AI正在思考</span>
-                                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                                    </div>
+                                <div class="ai-response-content" style="background:#fff;color:#000;min-height:200px;">
+                                    <div v-html="aiRendered"></div>
                                 </div>
                                 <div class="ai-chat-section">
                                     <div class="ai-chat-header">
@@ -1316,6 +1318,9 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div v-else style="text-align:center;padding:40px 0;">
+            <span>正在加载宝宝信息...</span>
         </div>
 
         <!-- 维护弹框 -->
@@ -1353,9 +1358,9 @@
                     </thead>
                     <tbody>
                         <tr v-for="record in baby.records" :key="record.id">
-                            <td>{{ record.date }}</td>
-                            <td>{{ record.height }}</td>
-                            <td>{{ record.weight }}</td>
+                            <td>{{ record && record.date ? record.date : '' }}</td>
+                            <td>{{ record && record.height ? record.height : '' }}</td>
+                            <td>{{ record && record.weight ? record.weight : '' }}</td>
                             <td>
                                 <button class="btn-delete" @click="deleteRecord(record.id)">删除</button>
                             </td>
@@ -1398,25 +1403,59 @@
             el: '#app',
             data() {
                 return {
-                    baby: null,
+                baby: {},
                     currentUser: null,
-                    newRecord: {
-                        date: new Date().toISOString().split('T')[0],
-                        height: '',
-                        weight: ''
-                    },
-                    charts: {
-                        heightAge: null,
-                        weightAge: null,
-                        heightWeight: null
-                    },
-                    showMaintainModal: false,
+                newRecord: {
+                    date: new Date().toISOString().split('T')[0],
+                    height: '',
+                    weight: ''
+                },
+                charts: {
+                    heightAge: null,
+                    weightAge: null,
+                    heightWeight: null
+                },
+                showMaintainModal: false,
                     showPhotoModal: false,
                     aiLoading: false,
                     aiResponse: null,
                     userQuestion: '',
-                    aiChunks: [] // AI流式分段内容
+                    aiChunks: [], // AI流式分段内容
+                    aiStarted: false,
+                    aiRendered: '',    // 最终整体渲染的HTML
+                    aiBuffer: '',     // 累积所有内容
                 };
+            },
+            computed: {
+                aiMergedChunks() {
+                    // 合并同类型内容
+                    if (!this.aiChunks.length) return [];
+                    const merged = [];
+                    let last = null;
+                    this.aiChunks.forEach(chunk => {
+                        if (!last || last.type !== chunk.type) {
+                            last = { type: chunk.type, content: chunk.content || '' };
+                            merged.push(last);
+                        } else {
+                            last.content += chunk.content || '';
+                        }
+                    });
+                    return merged;
+                },
+                aiFinalAnswer() {
+                    // 合并所有answer类型内容
+                    return this.aiChunks
+                        .filter(chunk => chunk.type === 'answer')
+                        .map(chunk => chunk.content || '')
+                        .join('');
+                },
+                aiFinalReasoning() {
+                    // 合并所有reasoning类型内容
+                    return this.aiChunks
+                        .filter(chunk => chunk.type === 'reasoning')
+                        .map(chunk => chunk.content || '')
+                        .join('');
+                }
             },
             created() {
                 this.checkAuth();
@@ -1439,10 +1478,10 @@
                         // 设置axios默认headers
                         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                         // 获取宝宝信息
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const babyId = urlParams.get('id');
-                        if (babyId) {
-                            this.fetchBaby(babyId);
+                const urlParams = new URLSearchParams(window.location.search);
+                const babyId = urlParams.get('id');
+                if (babyId) {
+                    this.fetchBaby(babyId);
                         }
                     } catch (error) {
                         console.error('解析用户信息失败:', error);
@@ -1519,7 +1558,7 @@
                         const recordDate = moment(record.date);
                         const ageInMonths = recordDate.diff(birthDate, 'months', true);
                         return {
-                            ...record,
+                        ...record,
                             age: parseFloat(ageInMonths.toFixed(1))
                         };
                     }).sort((a, b) => a.age - b.age);
@@ -1570,12 +1609,12 @@
                                 };
                             }
 
-                            // 身高-年龄图表
-                            this.charts.heightAge = echarts.init(document.getElementById('heightAgeChart'));
-                            this.charts.heightAge.setOption({
-                                tooltip: {
-                                    trigger: 'axis',
-                                    formatter: function(params) {
+                    // 身高-年龄图表
+                    this.charts.heightAge = echarts.init(document.getElementById('heightAgeChart'));
+                    this.charts.heightAge.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: function(params) {
                                         // 找到实际身高数据点
                                         const actualData = params.find(p => p.seriesName === '实际身高');
                                         if (!actualData) return '';
@@ -1595,10 +1634,10 @@
                                 legend: {
                                     data: ['实际身高', 'P3', 'P50', 'P97']
                                 },
-                                xAxis: {
-                                    type: 'value',
-                                    name: '年龄(月)',
-                                    nameLocation: 'middle',
+                        xAxis: {
+                            type: 'value',
+                            name: '年龄(月)',
+                            nameLocation: 'middle',
                                     nameGap: 30,
                                     min: 0,
                                     max: 60,
@@ -1608,24 +1647,24 @@
                                             return value.toFixed(0);
                                         }
                                     }
-                                },
-                                yAxis: {
-                                    type: 'value',
-                                    name: '身高(cm)',
-                                    nameLocation: 'middle',
-                                    nameGap: 30
-                                },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '身高(cm)',
+                            nameLocation: 'middle',
+                            nameGap: 30
+                        },
                                 series: [
                                     {
                                         name: '实际身高',
-                                        data: records.map(r => [r.age, r.height]),
-                                        type: 'line',
-                                        smooth: true,
-                                        symbol: 'circle',
-                                        symbolSize: 8,
-                                        itemStyle: {
-                                            color: '#4CAF50'
-                                        }
+                            data: records.map(r => [r.age, r.height]),
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 8,
+                            itemStyle: {
+                                color: '#4CAF50'
+                            }
                                     },
                                     {
                                         name: 'P3',
@@ -1661,14 +1700,14 @@
                                         }
                                     }
                                 ]
-                            });
+                    });
 
-                            // 体重-年龄图表
-                            this.charts.weightAge = echarts.init(document.getElementById('weightAgeChart'));
-                            this.charts.weightAge.setOption({
-                                tooltip: {
-                                    trigger: 'axis',
-                                    formatter: function(params) {
+                    // 体重-年龄图表
+                    this.charts.weightAge = echarts.init(document.getElementById('weightAgeChart'));
+                    this.charts.weightAge.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: function(params) {
                                         // 找到实际体重数据点
                                         const actualData = params.find(p => p.seriesName === '实际体重');
                                         if (!actualData) return '';
@@ -1688,10 +1727,10 @@
                                 legend: {
                                     data: ['实际体重', 'P3', 'P50', 'P97']
                                 },
-                                xAxis: {
-                                    type: 'value',
-                                    name: '年龄(月)',
-                                    nameLocation: 'middle',
+                        xAxis: {
+                            type: 'value',
+                            name: '年龄(月)',
+                            nameLocation: 'middle',
                                     nameGap: 30,
                                     min: 0,
                                     max: 60,
@@ -1701,24 +1740,24 @@
                                             return value.toFixed(0);
                                         }
                                     }
-                                },
-                                yAxis: {
-                                    type: 'value',
-                                    name: '体重(kg)',
-                                    nameLocation: 'middle',
-                                    nameGap: 30
-                                },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '体重(kg)',
+                            nameLocation: 'middle',
+                            nameGap: 30
+                        },
                                 series: [
                                     {
                                         name: '实际体重',
-                                        data: records.map(r => [r.age, r.weight]),
-                                        type: 'line',
-                                        smooth: true,
-                                        symbol: 'circle',
-                                        symbolSize: 8,
-                                        itemStyle: {
-                                            color: '#2196F3'
-                                        }
+                            data: records.map(r => [r.age, r.weight]),
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 8,
+                            itemStyle: {
+                                color: '#2196F3'
+                            }
                                     },
                                     {
                                         name: 'P3',
@@ -1745,8 +1784,8 @@
                                     {
                                         name: 'P97',
                                         data: standardData.map(d => [parseInt(d.age_months), d.weight['97th']]),
-                                        type: 'line',
-                                        smooth: true,
+                            type: 'line',
+                            smooth: true,
                                         symbol: 'none',
                                         lineStyle: {
                                             color: '#FF9800',
@@ -1754,19 +1793,19 @@
                                         }
                                     }
                                 ]
-                            });
+                    });
 
-                            // 监听窗口大小变化，调整图表大小
-                            window.addEventListener('resize', () => {
-                                Object.values(this.charts).forEach(chart => {
-                                    chart && chart.resize();
-                                });
+                    // 监听窗口大小变化，调整图表大小
+                    window.addEventListener('resize', () => {
+                        Object.values(this.charts).forEach(chart => {
+                            chart && chart.resize();
+                        });
                             });
                         })
                         .catch(error => {
                             console.error('加载标准生长曲线数据失败:', error);
                             Swal.fire('加载失败', '无法加载标准生长曲线数据', 'error');
-                        });
+                    });
                 },
                 addRecord() {
                     if (!this.newRecord.date || !this.newRecord.height || !this.newRecord.weight) {
@@ -1886,13 +1925,11 @@
                     return response.replace(/\n/g, '<br>');
                 },
                 async streamAIAnalysis() {
-                    if (!this.userQuestion.trim()) {
-                        Swal.fire('提示', '请输入您的问题', 'warning');
-                        return;
-                    }
                     this.aiLoading = true;
                     this.aiResponse = '';
                     this.aiChunks = [];
+                    this.aiRendered = '';
+                    this.aiBuffer = '';
                     const controller = new AbortController();
                     const token = localStorage.getItem('token');
                     try {
@@ -1910,23 +1947,40 @@
                         }
                         const reader = response.body.getReader();
                         const decoder = new TextDecoder('utf-8');
-                        let buffer = '';
                         while (true) {
+                            let buffer = '';
                             const { done, value } = await reader.read();
                             if (done) break;
-                            buffer += decoder.decode(value, { stream: true });
-                            let parts = buffer.split(/\ndata: /);
-                            for (let i = 1; i < parts.length; i++) {
-                                let text = parts[i].replace(/\n\n$/, '');
-                                if (text.trim()) {
-                                    this.aiChunks.push(text);
-                                    this.$nextTick(() => {
-                                        const el = document.querySelector('.ai-response-content');
-                                        if (el) el.scrollTop = el.scrollHeight;
-                                    });
-                                }
+                            buffer = decoder.decode(value, { stream: true });
+                            
+                            //去掉buffer中的开头的data:  去掉buffer中结尾的换行符
+                            buffer = buffer.replace(/^data: /, '').replace(/[\r\n]$/, '').replace(/[\r\n]$/, '');
+                            // 流式期间只累积文本
+                            this.aiBuffer += buffer;
+                            // 流式期间实时格式化渲染
+                            if (window.marked) {
+                                marked.setOptions({ gfm: true, breaks: true });
+                                this.aiRendered = marked.parse(this.aiBuffer);
+                            } else {
+                                this.aiRendered = this.aiBuffer.replace(/\n/g, '<br>');
                             }
-                            buffer = parts[0];
+                            this.$nextTick(() => {
+                                const el = document.querySelector('.ai-response-content');
+                                if (el) el.scrollTop = el.scrollHeight;
+                            });
+                        }
+                        // 结束后整体渲染
+                        if (this.aiBuffer && this.aiBuffer.trim()) {
+                            if (window.marked) {
+                                console.log('完整的Markdown内容:', this.aiBuffer );
+                                marked.setOptions({ gfm: true, breaks: true });
+                                // 表格前后加空行
+                                let md = this.aiBuffer;
+                                this.aiRendered = marked.parse(md);
+                            } else {
+                                this.aiRendered = this.aiBuffer.replace(/\n/g, '<br>');
+                            }
+                            this.aiBuffer = '';
                         }
                         this.userQuestion = '';
                     } catch (error) {
@@ -1936,12 +1990,28 @@
                         this.aiLoading = false;
                     }
                 },
-                formatAIChunk(chunk) {
-                    // 支持markdown渲染
-                    if (window.marked) {
-                        return marked.parse(chunk || '');
+                formatAIChunk(chunk, idx) {
+                    let label = '';
+                    if (chunk.type === 'reasoning' && idx === 0) {
+                        label = '<span style="color:#888;font-size:0.95em;">【思考过程】</span><br>';
+                    } else if (chunk.type === 'answer' && idx === 0) {
+                        label = '<span style="color:#007bff;font-size:0.95em;">【AI回复】</span><br>';
+                    } else if (chunk.type === 'error') {
+                        label = '<span style="color:red;font-size:0.95em;">【AI错误】</span><br>';
                     }
-                    return chunk.replace(/\n/g, '<br>');
+                    let content = chunk.content || '';
+                    // markdown预处理：标题、列表、表格前后加空行，去除多余空格
+                    content = content
+                        .replace(/(#+ .+)/g, '\n$1\n') // 标题前后加空行
+                        .replace(/([-*] .+)/g, '\n$1') // 列表项前加空行
+                        .replace(/\n{2,}/g, '\n\n')   // 多余换行合并
+                        .replace(/\s+$/gm, '');       // 行尾空格去除
+                    if (window.marked) {
+                        content = marked.parse(content);
+                    } else {
+                        content = content.replace(/\n/g, '<br>');
+                    }
+                    return label + content;
                 },
                 async changePhoto(baby) {
                     const input = document.createElement('input');
@@ -1970,6 +2040,10 @@
                         }
                     };
                     input.click();
+                },
+                onStartAIAnalysis() {
+                    this.aiStarted = true;
+                    this.streamAIAnalysis();
                 }
             }
         });
