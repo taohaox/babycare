@@ -226,6 +226,22 @@
     <script src="js/axios.min.js"></script>
     <script src="js/sweetalert2.all.min.js"></script>
     <script>
+        // 添加axios响应拦截器，自动处理登录过期
+        axios.interceptors.response.use(function (response) {
+            // 正常响应直接返回
+            return response;
+        }, function (error) {
+            // 如果返回401，说明登录状态已过期或无效
+            if (error.response && error.response.status === 401) {
+                // 清除本地token，跳转到登录页面
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+            // 其他错误继续抛出
+            return Promise.reject(error);
+        });
+
         new Vue({
             el: '#app',
             data: {

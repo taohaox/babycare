@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, current_app
+from flask import Flask, request, jsonify, send_from_directory, current_app, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime, timedelta
@@ -553,22 +553,14 @@ def get_ai_analysis(baby_id):
         baby = Baby.query.filter_by(id=baby_id, user_id=request.current_user_id).first()
         if not baby:
             return jsonify({'message': '宝宝不存在或无权限访问'}), 404
-        
-        # 检查AI客户端是否可用
         if ai_client is None:
             return jsonify({'success': False, 'message': 'AI服务未正确配置，请检查API密钥'}), 500
-        
-        # 获取生长记录
         records = GrowthRecord.query.filter_by(baby_id=baby_id).order_by(GrowthRecord.record_date).all()
-        
-        # 计算当前年龄
         from datetime import date
         today = date.today()
         age_days = (today - baby.birth_date).days
         age_months = age_days / 30.44
         age_years = age_days / 365.25
-        
-        # 读取儿童生长标准资料
         gender = baby.gender
         if gender == '男':
             std_file = os.path.join('config', 'growth_curve_boy.json')
@@ -577,7 +569,6 @@ def get_ai_analysis(baby_id):
         try:
             with open(std_file, 'r', encoding='utf-8') as f:
                 std_data = json.load(f)
-            # 只取主要部分，避免内容过长
             std_summary = json.dumps({
                 'units': std_data['growth_curve'].get('units'),
                 'percentile_data': std_data['growth_curve'].get('percentile_data'),
@@ -585,8 +576,6 @@ def get_ai_analysis(baby_id):
             }, ensure_ascii=False, indent=2)
         except Exception as e:
             std_summary = '（未能加载生长标准资料）'
-        
-        # 构建宝宝信息文本
         baby_info = f"""
 宝宝基本信息：
 - 姓名：{baby.name}
@@ -594,8 +583,6 @@ def get_ai_analysis(baby_id):
 - 出生日期：{baby.birth_date}
 - 当前年龄：{age_years:.1f}岁（{age_months:.1f}个月）
 """
-        
-        # 构建生长记录文本
         if records:
             growth_info = "\n生长记录：\n"
             for record in records:
@@ -604,56 +591,34 @@ def get_ai_analysis(baby_id):
                 growth_info += f"- {record.record_date}（{record_age_months:.1f}个月）：身高{record.height}cm，体重{record.weight}kg\n"
         else:
             growth_info = "\n暂无生长记录"
-        
-        # 获取用户消息
         data = request.get_json() or {}
         user_message = data.get('message', '')
-        
-        # 构建AI提示词
         std_prompt = f"以下是儿童生长标准资料（请结合分析）：\n{std_summary}\n"
         if not user_message:
-            # 初始分析
-            system_prompt = """你是一位专业的儿科医生和儿童生长发育专家。请根据提供的宝宝信息、生长记录和生长标准资料，给出专业的生长发育解读和建议。
-
-请从以下几个方面进行分析：
-1. 生长发育评估：根据年龄、身高、体重数据评估宝宝的生长发育情况
-2. 百分位分析：结合生长标准资料，分析宝宝在同龄儿童中的位置
-3. 营养建议：根据生长发育情况给出营养建议
-4. 注意事项：提醒家长需要注意的事项
-5. 建议：给出具体的改进建议或继续保持的建议
-
-请用通俗易懂的语言回答，避免过于专业的医学术语。"""
-            
+            system_prompt = """你是一位专业的儿科医生和儿童生长发育专家。请根据提供的宝宝信息、生长记录和生长标准资料，给出专业的生长发育解读和建议。\n\n请从以下几个方面进行分析：\n1. 生长发育评估：根据年龄、身高、体重数据评估宝宝的生长发育情况\n2. 百分位分析：结合生长标准资料，分析宝宝在同龄儿童中的位置\n3. 营养建议：根据生长发育情况给出营养建议\n4. 注意事项：提醒家长需要注意的事项\n5. 建议：给出具体的改进建议或继续保持的建议\n\n请用通俗易懂的语言回答，避免过于专业的医学术语。"""
             user_prompt = f"{std_prompt}{baby_info}{growth_info}\n\n请对这位宝宝的生长发育情况进行专业解读和建议。"
         else:
-            # 后续对话
-            system_prompt = """你是一位专业的儿科医生和儿童生长发育专家。请根据之前的对话、宝宝信息和生长标准资料，继续为用户提供专业的建议和解答。
-
-请保持专业、耐心、友好的态度，用通俗易懂的语言回答用户的问题。"""
-            
+            system_prompt = """你是一位专业的儿科医生和儿童生长发育专家。请根据之前的对话、宝宝信息和生长标准资料，继续为用户提供专业的建议和解答。\n\n请保持专业、耐心、友好的态度，用通俗易懂的语言回答用户的问题。"""
             user_prompt = f"{std_prompt}{baby_info}{growth_info}\n\n用户问题：{user_message}"
-        
         logger.info(f"发送AI请求，用户消息长度: {len(user_message)}")
-        
-        # 调用AI接口
-        completion = ai_client.chat.completions.create(
-            model="qwen-plus",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-        
-        ai_response = completion.choices[0].message.content
-        logger.info(f"AI响应成功，响应长度: {len(ai_response)}")
-        
-        return jsonify({
-            'success': True,
-            'message': ai_response,
-            'baby_info': baby_info,
-            'growth_info': growth_info
-        })
-        
+        def generate():
+            try:
+                completion = ai_client.chat.completions.create(
+                    model="qwen-plus",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    stream=True
+                )
+                for chunk in completion:
+                    delta = getattr(chunk.choices[0], 'delta', None)
+                    if delta and getattr(delta, 'content', None):
+                        # SSE格式，前端可直接用fetch+EventSource接收
+                        yield f"data: {delta.content}\n\n"
+            except Exception as e:
+                yield f"data: [AI分析失败] {str(e)}\n\n"
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
     except Exception as e:
         logger.error(f"AI分析失败: {str(e)}")
         return jsonify({'success': False, 'message': f'AI分析失败: {str(e)}'}), 500

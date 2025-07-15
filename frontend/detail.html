@@ -874,24 +874,42 @@
             line-height: 1.6;
             color: #333;
             font-size: 1rem;
+            min-height: 120px;
+            max-height: 350px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            transition: box-shadow 0.2s;
         }
-
-        .ai-response-content p {
-            margin-bottom: 12px;
-        }
-
-        .ai-response-content ul, .ai-response-content ol {
-            margin-bottom: 12px;
-            padding-left: 20px;
-        }
-
-        .ai-response-content li {
+        .ai-response-content .ai-stream-chunk {
+            display: block;
             margin-bottom: 6px;
+            word-break: break-all;
         }
-
-        .ai-response-content strong {
+        .ai-thinking {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
             color: #667eea;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .ai-thinking .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            display: inline-block;
+            animation: ai-blink 1.2s infinite both;
+        }
+        .ai-thinking .dot:nth-child(2) { animation-delay: 0.2s; }
+        .ai-thinking .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes ai-blink {
+            0%, 80%, 100% { opacity: 0.2; }
+            40% { opacity: 1; }
         }
 
         .ai-chat-section {
@@ -1261,7 +1279,18 @@
                                 <div class="ai-response-header">
                                     <h5><i class="bi bi-check-circle-fill text-success me-2"></i>AI解读结果</h5>
                                 </div>
-                                <div class="ai-response-content" v-html="formatAIResponse(aiResponse)"></div>
+                                <div class="ai-response-content">
+                                    <template v-if="aiChunks.length">
+                                        <div v-for="(chunk, idx) in aiChunks" :key="idx" class="ai-stream-chunk" v-html="formatAIChunk(chunk)"></div>
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-muted">暂无AI解读内容</span>
+                                    </template>
+                                    <div v-if="aiLoading" class="ai-thinking">
+                                        <span>AI正在思考</span>
+                                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                                    </div>
+                                </div>
                                 <div class="ai-chat-section">
                                     <div class="ai-chat-header">
                                         <h6><i class="bi bi-chat-dots me-2"></i>继续咨询</h6>
@@ -1271,9 +1300,9 @@
                                         <div class="input-group">
                                             <textarea v-model="userQuestion"
                                                       placeholder="请输入您的问题，例如：宝宝最近不爱吃饭怎么办？"
-                                                      @keyup.enter.ctrl="askAI"
+                                                      @keyup.enter.ctrl="streamAIAnalysis"
                                                       :disabled="aiLoading"></textarea>
-                                            <button class="btn btn-outline-primary" @click="askAI" :disabled="aiLoading">
+                                            <button class="btn btn-outline-primary" @click="streamAIAnalysis" :disabled="aiLoading">
                                                 <span v-if="aiLoading" class="spinner-border spinner-border-sm me-2"></span>
                                                 <i v-else class="bi bi-send me-2"></i>
                                                 发送
@@ -1350,26 +1379,44 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        // 添加axios响应拦截器，自动处理登录过期
+        axios.interceptors.response.use(function (response) {
+            // 正常响应直接返回
+            return response;
+        }, function (error) {
+            // 如果返回401，说明登录状态已过期或无效
+            if (error.response && error.response.status === 401) {
+                // 清除本地token，跳转到登录页面
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+            // 其他错误继续抛出
+            return Promise.reject(error);
+        });
         new Vue({
             el: '#app',
-            data: {
-                baby: null,
-                currentUser: null,
-                newRecord: {
-                    date: new Date().toISOString().split('T')[0],
-                    height: '',
-                    weight: ''
-                },
-                charts: {
-                    heightAge: null,
-                    weightAge: null,
-                    heightWeight: null
-                },
-                showMaintainModal: false,
-                showPhotoModal: false,
-                aiLoading: false,
-                aiResponse: null,
-                userQuestion: ''
+            data() {
+                return {
+                    baby: null,
+                    currentUser: null,
+                    newRecord: {
+                        date: new Date().toISOString().split('T')[0],
+                        height: '',
+                        weight: ''
+                    },
+                    charts: {
+                        heightAge: null,
+                        weightAge: null,
+                        heightWeight: null
+                    },
+                    showMaintainModal: false,
+                    showPhotoModal: false,
+                    aiLoading: false,
+                    aiResponse: null,
+                    userQuestion: '',
+                    aiChunks: [] // AI流式分段内容
+                };
             },
             created() {
                 this.checkAuth();
@@ -1838,30 +1885,63 @@
                     }
                     return response.replace(/\n/g, '<br>');
                 },
-                askAI() {
+                async streamAIAnalysis() {
                     if (!this.userQuestion.trim()) {
                         Swal.fire('提示', '请输入您的问题', 'warning');
                         return;
                     }
-                    
                     this.aiLoading = true;
-                    axios.post(`${window.API_BASE}/babies/${this.baby.id}/ai-analysis`, {
-                        message: this.userQuestion
-                    })
-                    .then(response => {
-                        if (response.data.success) {
-                            this.aiResponse = response.data.message;
-                            this.userQuestion = ''; // 清空输入框
-                        } else {
-                            Swal.fire('获取失败', response.data.message, 'error');
+                    this.aiResponse = '';
+                    this.aiChunks = [];
+                    const controller = new AbortController();
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${window.API_BASE}/babies/${this.baby.id}/ai-analysis`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ message: this.userQuestion }),
+                            signal: controller.signal
+                        });
+                        if (!response.ok) {
+                            throw new Error('AI接口请求失败');
                         }
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder('utf-8');
+                        let buffer = '';
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            buffer += decoder.decode(value, { stream: true });
+                            let parts = buffer.split(/\ndata: /);
+                            for (let i = 1; i < parts.length; i++) {
+                                let text = parts[i].replace(/\n\n$/, '');
+                                if (text.trim()) {
+                                    this.aiChunks.push(text);
+                                    this.$nextTick(() => {
+                                        const el = document.querySelector('.ai-response-content');
+                                        if (el) el.scrollTop = el.scrollHeight;
+                                    });
+                                }
+                            }
+                            buffer = parts[0];
+                        }
+                        this.userQuestion = '';
+                    } catch (error) {
+                        console.error('AI流式对话失败:', error);
+                        Swal.fire('获取失败', error.message || '请重试', 'error');
+                    } finally {
                         this.aiLoading = false;
-                    })
-                    .catch(error => {
-                        console.error('AI对话失败:', error);
-                        Swal.fire('获取失败', '请重试', 'error');
-                        this.aiLoading = false;
-                    });
+                    }
+                },
+                formatAIChunk(chunk) {
+                    // 支持markdown渲染
+                    if (window.marked) {
+                        return marked.parse(chunk || '');
+                    }
+                    return chunk.replace(/\n/g, '<br>');
                 },
                 async changePhoto(baby) {
                     const input = document.createElement('input');
