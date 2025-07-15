@@ -36,3 +36,4 @@ Thumbs.db
 
 # 其他
 *.bak 
+frontend/config.js

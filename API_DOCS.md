@@ -251,9 +251,9 @@ file: <file>
 ## 配置文件访问
 
 ### 14. 获取配置文件
-**GET** `/config/<filename>`
+**GET** `/api/config/<filename>`
 
-例如：`/config/growth_curve_boy.json`
+例如：`/api/config/growth_curve_boy.json`
 
 ## 认证说明
 

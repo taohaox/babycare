@@ -4,11 +4,11 @@ const config = {
     FRONTEND_HOST: 'localhost',
     FRONTEND_PORT: 8080,
     // 后端主机
-    // BACKEND_HOST: 'babyapi.gonyb.com',
+    BACKEND_HOST: 'babyapi.gonyb.com',
     // // 后端端口（如有需要可填写，如 8080；如 80/443 可留空）
     // BACKEND_PORT: '',
 
-    BACKEND_HOST: 'localhost:5000',
+    // BACKEND_HOST: 'localhost:5000',
     // 后端端口（如有需要可填写，如 8080；如 80/443 可留空）
 };
 
